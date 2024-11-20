@@ -1,0 +1,9 @@
+# Contain sensitive data
+.env
+Dockerfile
+
+# Installation spefic files
+certs/
+drive/
+data/
+record/
