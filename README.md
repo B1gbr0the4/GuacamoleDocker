@@ -21,6 +21,7 @@
     - [Lancement et arrêt](#lancement-et-arrêt)
   - [Paramétrage](#paramétrage)
     - [Première authentification](#première-authentification)
+    - [Configuration de la console d'administration](#configuration-de-la-console-dadministration)
     - [Configuration générale du bastion](#configuration-générale-du-bastion)
     - [Authentification](#authentification)
   - [Informations utiles](#informations-utiles)
@@ -196,6 +197,48 @@ Les identifiants de l'interface web sont les suivants :
 - Nom d'utilisateur :   `guacadmin`
 - Mot de passe :        `guacadmin`
 
+### Configuration de la console d'administration
+
+Une fois sur l'interface web (IP donnée à la fin de l'execution), il est possible de configurer les connexions aux serveurs. Pour cela, il faut se rendre dans *Settings > Connections > New Connection* et remplir les champs en suivants les informations de la documentation de Guacamole.
+
+Typiquement, pour une connection SSH, on remplira :
+
+- EDIT CONNECTION
+  - Name : `Debian`
+  - Location : `ROOT`
+  - Protocol : `SSH`
+- CONCURRENCY LIMIT
+  - Maximum number of connections : `1`
+  - Maximum number of connections per user : `1`
+- PARAMETERS
+  - Network
+    - Hostname : `debian`
+    - Port : `22`
+    - Authentication
+      - Username : `johndoe`
+      - Password : `yourpassword`
+  
+Et pour une connection RDP : 
+
+  - Name : `Windows`
+  - Location : `ROOT`
+  - Protocol : `RDP`
+- CONCURRENCY LIMIT
+  - Maximum number of connections : `1`
+  - Maximum number of connections per user : `1`
+- PARAMETERS
+  - Network
+    - Hostname : `windows`
+    - Port : `3389`
+    - Authentication
+      - Username : `johndoe`
+      - Password : `yourpassword`
+      - Ignore server certificate : `true`
+    - Device redirection
+      - Support audio in console : `true`
+      - Disable file download : `true`
+      - Disable file upload : `true`
+
 ### Configuration générale du bastion
 
 Pour configurer le bastion (ajout de serveurs, d'utilisateurs, de connexions, etc.), se référer à la [documentation de guacamole](https://guacamole.apache.org/doc/gug/) et aux divers tutoriels disponibles en ligne.
@@ -215,8 +258,9 @@ L'authentification par base de donnée est aujourd'hui la mieux supportée, mais
 
 ## Informations utiles
 
-* Le nom DNS des machines dans un réseau docker est le nom du conteneur associé.
-* Il est possible de dé-commenter les sections `ports` dans le fichier docker-compose à des fins de débogage.
+- Le nom DNS des machines dans un réseau docker est le nom du conteneur associé,
+- Il est possible de dé-commenter les sections `ports` dans le fichier docker-compose à des fins de débogage,
+- Le support de Guacamole sur Docker, bien que largement fonctionnel, comporte encore des bugs mineurs, et des trous dans la documentation, qui peuvent rendre l'implémentation de certaines fonctionnalités plus complexes que prévu.
 
 ## Approfondissement
 
