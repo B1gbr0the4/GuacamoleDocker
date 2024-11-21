@@ -1,24 +1,44 @@
-<img src="https://upload.wikimedia.org/wikipedia/en/a/a1/Universit%C3%A9_du_Qu%C3%A9bec_%C3%A0_Chicoutimi_%28logo%29.png" width="15%" />
+# Infrastructure avec Bastion
 
-# 8INF857 - Sécurité informatique - Automne 2024 - G11
-# Devoir 3 - Projet de session - Infrastructure avec Bastion
-
-<img src="./img/bastion_copilot.jpg" width="20%" />
+![Image_Couverture](./img/bastion_copilot.jpg)
 
 ## Sommaire
 
+- [Infrastructure avec Bastion](#infrastructure-avec-bastion)
+  - [Sommaire](#sommaire)
+  - [Contexte](#contexte)
   - [Pré-requis](#pré-requis)
     - [Installation (Ubuntu)](#installation-ubuntu)
     - [Installation (WSL)](#installation-wsl)
       - [Installer WSL](#installer-wsl)
       - [Installer docker](#installer-docker)
   - [Déploiement de l'architecture via Docker](#déploiement-de-larchitecture-via-docker)
+    - [Arborescence](#arborescence)
     - [Première exécution](#première-exécution)
     - [Lancement et arrêt](#lancement-et-arrêt)
-  - [Première authentification](#première-authentification)
-  - [Configuration du bastion](#configuration-du-bastion)
-  - [Infos utiles](#infos-utiles)
-  - [Sources](#sources)
+  - [Paramétrage](#paramétrage)
+    - [Première authentification](#première-authentification)
+    - [Configuration générale du bastion](#configuration-générale-du-bastion)
+    - [Authentification](#authentification)
+  - [Informations utiles](#informations-utiles)
+  - [Sources et références](#sources-et-références)
+
+## Contexte
+ 
+
+La plupart des bastions sur le marché sont des solutions commerciales propriétaires. Nous avons choisi de développer un démonstrateur de bastion open-source, en utilisant l'une des rares solutions correspondant à ce critère : [Apache Guacamole](https://guacamole.apache.org/).
+
+L'implémentation est réalisée sous Docker, dans un objectif de portabilité et de facilité de déploiement. L'architecture est d'abord composée de conteneurs implémentant la colonne vertébrale de l'application :  
+
+- `guacd` : Le conteneur fournissant le démon `guacd`, construit à partir de `guacamole-server`, et qui implémente les différents protocoles de contrôle à distance (RDP, SSH, VNC...), 
+- `guacamole` : L’application web Guacamole, implémentée sous Apache Tomcat® supportant le protocole *WebSocket*, qui permet la connexion à `guacd`, et aux moyens d’authentifications.,
+- `postgres` : La base de données chiffrée permettant l’authentification, contenant l’ensemble des utilisateurs, leurs *credentials* (identifiant/mot de passe) et leurs droits. PostGreSQL, contrairement à ses concurrents comme SQL Server, est open-source, très performant pour des bases de grande taille, et flexible, supportant à la fois les formats relationnels (SQL) et non-relationnels (JSON),
+- `nginx` :  Un serveur web open source, adapté pour les *reverse proxy* (ce qui est son rôle ici). 
+
+Et de deux conteneurs soutenant le démonstrateur, et visant à être remplacés par des serveurs réels dans un environnement de production :
+
+- `windows` : Le serveur Windows, qui émule un WIndows XP. Cette version a été préférée à des versions plus récente pour son poids (0,6 Go contre 6 Go pour WIndows 11), et par le caractère hors-ligne de ce projet, évitant les risques liés à l’utilisation de Windows XP dans des environnements quotidiens. Il est possible de changer l'image pour une version plus récente dans le *Dockerfile*,
+- `debian` : Le serveur Linux, basé sur Debian, a également été choisi pour sa légèreté. Une image custom est créée afin d’ajouter un serveur SSH. 
 
 ## Pré-requis
 
@@ -81,6 +101,17 @@ Si tout se passe bien, vous obtiendrez la sortie suivante :
 
 ## Déploiement de l'architecture via Docker
 
+### Arborescence 
+
+L’arborescence du livrable bastion/ contient 4 dossiers ressources :  
+
+- `init/` : Mappé au dossier `/docker-entrypoint-initdb.d` du conteneur `postgres`, contient le script SQL (`initdb.sql`) qui crée la base de données PostgreSQL,
+- `data/` : Mappé au dossier `/var/lib/postgresql/data/` du conteneur `postgres`, contient les données de la base de donnée PostgreSQL,
+- `drive/` : Mappé aux deux conteneurs de Guacamole, contient les données utilisateur,
+- `record/` : Mappé aux deux conteneurs de Guacamole, contient les enregistrements des sessions. 
+
+Le déploiement se fait via un fichier `docker-compose`. Docker Compose facilite la gestion de configurations Docker complexes en remplaçant les longues commandes Docker par un fichier de configuration structuré en YAML. 
+
 ### Première exécution
 
 * Récupérer le contenu du dossier `Dev3` et le transférer sur la machine.
@@ -114,25 +145,40 @@ sudo ./run.sh
 sudo ./reset.sh
 ```
 
+## Paramétrage 
+
 ### Première authentification
 
 **Changez le mot de passe à la première connexion !**
 
 Les identifiants de l'interface web sont les suivants :
 
-Nom d'utilisateur :   `guacadmin`
-<br>Mot de passe :        `guacadmin`
+- Nom d'utilisateur :   `guacadmin`
+- Mot de passe :        `guacadmin`
 
-### Configuration du bastion
+### Configuration générale du bastion
 
-Se référer à la [documentation de guacamole](https://guacamole.apache.org/doc/gug/) et aux divers tutoriels disponibles en ligne.
+Pour configurer le bastion (ajout de serveurs, d'utilisateurs, de connexions, etc.), se référer à la [documentation de guacamole](https://guacamole.apache.org/doc/gug/) et aux divers tutoriels disponibles en ligne.
 
-## Infos utiles
+Pour le conteneur Windows, notamment pour changer la version de Windows, voir la documentation du projet : [Dockur/Windows](https://github.com/dockur/windows/blob/master/readme.md)
+
+### Authentification
+
+Guacamole supporte différents modes d'authentification :
+
+- Authentification : 
+  - Simple (Base de données, LDAP, HTTP Header, JSON chiffré, RADIUS) 
+  - Via SSO (CAS, OpenID Connect, SAML)
+  - 2FA (Duo, TOTP) 
+
+L'authentification par base de donnée est aujourd'hui la mieux supportée, mais il est possible de configurer d'autres modes d'authentification en suivant la [documentation](https://guacamole.apache.org/doc/gug/). Dans un environnement de production, on aura tendance à privilégier l'authentification par LDAP, qui permet de centraliser les identifiants et les droits des utilisateurs.
+
+## Informations utiles
 
 * Le nom DNS des machines dans un réseau docker est le nom du conteneur associé.
-* Il est possible de décommenter les sections `ports` dans le fichier docker-compose à des fins de déboggage.
+* Il est possible de dé-commenter les sections `ports` dans le fichier docker-compose à des fins de débogage.
 
-## Sources
+## Sources et références
 
 - [docker-bastion](https://github.com/lprat/docker-bastion)
 - [windows docker](https://github.com/dockur/windows)
