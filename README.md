@@ -24,6 +24,7 @@
     - [Configuration générale du bastion](#configuration-générale-du-bastion)
     - [Authentification](#authentification)
   - [Informations utiles](#informations-utiles)
+  - [Approfondissement](#approfondissement)
   - [Sources et références](#sources-et-références)
 
 ## Sécurisation des SI
@@ -216,6 +217,14 @@ L'authentification par base de donnée est aujourd'hui la mieux supportée, mais
 
 * Le nom DNS des machines dans un réseau docker est le nom du conteneur associé.
 * Il est possible de dé-commenter les sections `ports` dans le fichier docker-compose à des fins de débogage.
+
+## Approfondissement
+
+Parmi les ajouts à ce projet, nous conseillons en premier lieu :
+
+- Implémentation d’une authentification MFA : Guacamole fournit le moyen de configurer une authentification multi-facteurs, qui permet, dans le contexte d’accès à des données sensibles (administration de serveurs), de sécuriser l’accès contre des usurpations d’identités ou de credentials,
+- Authentification déléguée : Actuellement, par simplicité, et parce qu’il s’agit du mode le mieux géré par Guacamole, l’authentification de ce PoC passe par des comptes inscrits dans une base de données. En pratique, les entreprises possèdent généralement une solution de gestion centralisée des comptes utilisateurs (Kerberos, LDAP, Active Directory...), qui permet une meilleure vision générale des identités à travers le périmètre. Guacamole supporte la délégation de l’authentification à ces services, ce qu’il conviendrait de mettre en place,
+- Utilisation d’une machine dédiée à l’administration : Actuellement, dans un souci de portabilité du démonstrateur, celui-ci concentre l’ensemble des machines (bastion, identification, serveurs) en local. En pratique, on placerait le bastion sur un réseau d’administration cloisonné, dont l’accès serait réservé aux utilisateurs disposant des droits suffisants (solution du type *Single Packet Authorization*). 
 
 ## Sources et références
 
