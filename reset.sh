@@ -21,7 +21,7 @@ do
     case $opt in
         "Stop every containers (but don't remove them)")
             echo "Stopped :"
-            docker stop guacd_compose postgres_guacamole_compose guacamole_compose nginx_guacamole_compose windows debian
+            docker stop ${WINDOWS_CONTAINER_NAME} ${DEBIAN_CONTAINER_NAME} ${POSTGRES_CONTAINER_NAME} ${GUACD_CONTAINER_NAME} ${GUACAMOLE_CONTAINER_NAME} ${NGINX_CONTAINER_NAME}
             echo "Done!"
             ;;
         "Stop and remove every containers (keep persistent volumes)")

@@ -22,6 +22,7 @@
   - [Paramétrage](#paramétrage)
     - [Première authentification](#première-authentification)
     - [Configuration de la console d'administration](#configuration-de-la-console-dadministration)
+    - [Enregistrement des sessions](#enregistrement-des-sessions)
     - [Configuration générale du bastion](#configuration-générale-du-bastion)
     - [Authentification](#authentification)
   - [Informations utiles](#informations-utiles)
@@ -85,10 +86,12 @@ Et de deux conteneurs soutenant le démonstrateur, et visant à être remplacés
 
 ### Installation (Ubuntu)
 
+Installer Docker : [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
+
 Installer les paquets nécessaires :
 
 ```bash
-sudo apt install docker docker-compose-v2 openssl -y
+sudo apt install docker-compose-v2 openssl -y
 ```
 
 ### Installation (WSL)
@@ -158,7 +161,6 @@ Le déploiement se fait via un fichier `docker-compose`. Docker Compose facilite
 * Récupérer le contenu du dossier `Dev3` et le transférer sur la machine.
 * Mettre en place le fichier .env (on génère ici avec sed un mot de passe aléatoire pour la base de données) :
 ```bash
-cd Dev3
 cp .env.example .env
 sed -i "s/POSTGRES_PASSWORD=changeme/POSTGRES_PASSWORD=$(openssl rand -hex 32)/" .env
 ```
@@ -203,14 +205,14 @@ Une fois sur l'interface web (IP donnée à la fin de l'execution), il est possi
 
 Typiquement, pour une connection SSH, on remplira :
 
-- EDIT CONNECTION
+- **EDIT CONNECTION**
   - Name : `Debian`
   - Location : `ROOT`
   - Protocol : `SSH`
 - CONCURRENCY LIMIT
   - Maximum number of connections : `1`
   - Maximum number of connections per user : `1`
-- PARAMETERS
+- **PARAMETERS**
   - Network
     - Hostname : `debian`
     - Port : `22`
@@ -220,13 +222,14 @@ Typiquement, pour une connection SSH, on remplira :
   
 Et pour une connection RDP : 
 
+- **EDIT CONNECTION**
   - Name : `Windows`
   - Location : `ROOT`
   - Protocol : `RDP`
 - CONCURRENCY LIMIT
   - Maximum number of connections : `1`
   - Maximum number of connections per user : `1`
-- PARAMETERS
+- **PARAMETERS**
   - Network
     - Hostname : `windows`
     - Port : `3389`
@@ -238,6 +241,44 @@ Et pour une connection RDP :
       - Support audio in console : `true`
       - Disable file download : `true`
       - Disable file upload : `true`
+
+Pour configurer un utilisateur, aller dans *Settings > Users > New User* et remplir par exemple les champs :
+
+- **EDIT USER**
+  - Username : `john doe`
+  - Password : `yourpassword`
+  - Re-enter password : `yourpassword`
+- **PROFILE**
+  - Full Name : `John Doe`
+  - Email Address : `john.doe@example.com`
+  - Organization : `Example Inc.`
+  - Role : `Example User`
+- **ACCOUNT RESTRICTIONS**
+  - User timezone : `Europe/Paris`
+- **PERMISSIONS**
+  - Change own password : `true`
+- **CONNECTIONS**
+  - All connections
+    - *debian* : `true`
+    - *windows* : `false`
+
+### Enregistrement des sessions
+
+Pour enregistrer les sessions, il faut, dans les paramètres d'une connection, éditer :
+
+- Enregistrement Ecran
+  - Chemin de l'enregistrement : `{HISTORY_PATH}/${HISTORY_UUID}`, qui permet de générer automatiquement les dossiers d’enregistrement à partir d’un ID unique
+  - Nom de l'enregistrement : `${GUAC_DATE}_${GUAC_TIME}`, qui permet de nommer automatiquement le fichier avec la date et l’heure de l’enregistrement
+  - Créer automatiquement le chemin de l'enregistrement : `true`
+
+Pour enregistrer uniquement le textuel SSH, la section s'appelle **Typescript (Text Session Recording)**.
+
+Guacamole utilise un format d'enregistrement particulier, qui permet de sauvegarder de longues sessions avec un volume réduit. Actuellement, ce format est lu dans le navigateur via une extension, mais il est aussi possible de convertir automatiquement les fichiers :
+
+- Soit avec la commande `guacenc` : Voir la [documentation](https://guacamole.apache.org/doc/gug/configuring-guacamole.html#graphical-session-recording), mais celle-ci est complexe à installer dans Docker, avec de nombreux problèmes de dépendances. Vous pouvez aussi essayer de l'installer sur votre machine hôte,
+- Soit avec un nouveau conteneur, comme [bytepen/guacenc](https://hub.docker.com/r/bytepen/guacenc).
+
+De même avec les enregistrements textuels, dans un format particulier convertissables avec `scriptreplay`.
 
 ### Configuration générale du bastion
 
@@ -260,6 +301,11 @@ L'authentification par base de donnée est aujourd'hui la mieux supportée, mais
 
 - Le nom DNS des machines dans un réseau docker est le nom du conteneur associé,
 - Il est possible de dé-commenter les sections `ports` dans le fichier docker-compose à des fins de débogage,
+- Si vous avez besoin de forcer un *hard-delete* pour des raisons de débogage, vous pouvez utiliser la commande suivante :
+  ```sh
+  docker stop $(docker ps -a -q)
+  docker rm $(docker ps -a -q)
+  ```
 - Le support de Guacamole sur Docker, bien que largement fonctionnel, comporte encore des bugs mineurs, et des trous dans la documentation, qui peuvent rendre l'implémentation de certaines fonctionnalités plus complexes que prévu.
 
 ## Approfondissement

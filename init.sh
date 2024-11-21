@@ -14,6 +14,7 @@ CERTS_PATH="./certs"
 # BEGINNING OF THE SCRIPT
 
 # Load .env file
+echo "[i] Loading .env file"
 source .env
 
 # check if docker is running
@@ -22,6 +23,7 @@ then
 	echo "[!] Docker daemon not running, will exit here!"
 	exit
 fi
+echo "[i] Docker daemon is running"
 
 echo "[i] Preparing folder init and creating ./init/initdb.sql"
 mkdir ./init >/dev/null 2>&1
@@ -45,5 +47,9 @@ mkdir -p $CERTS_PATH
 openssl req -newkey rsa:4096 -keyout "$CERTS_PATH/server.key" -out "$CERTS_PATH/server.csr" -subj "$SUBJECT" -nodes
 openssl x509 -req -days $DAYS_VALID -in "$CERTS_PATH/server.csr" -signkey "$CERTS_PATH/server.key" -out "$CERTS_PATH/server.crt"
 rm "$CERTS_PATH/server.csr"
+
+# Create the record folder
+echo "[i] Creating record/, drive/ and data/ folders"
+mkdir -p ./record ./drive ./data
 
 echo "All done"

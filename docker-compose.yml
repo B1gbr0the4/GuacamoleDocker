@@ -24,7 +24,7 @@ services:
   windows:
     cap_add:
       - NET_ADMIN
-    container_name: windows
+    container_name: ${WINDOWS_CONTAINER_NAME}
     devices:
       - /dev/kvm
     env_file: .env
@@ -45,7 +45,7 @@ services:
 
   # Simple Linux server with SSH, serves as host to test guacamole
   debian:
-    container_name: debian
+    container_name: ${DEBIAN_CONTAINER_NAME}
     image: debian_ssh # custom build with SSH server, see Dockerfile
     networks:
       - guacnetwork_compose
@@ -54,7 +54,7 @@ services:
 
   # postgres, guacamole database
   postgres:
-    container_name: postgres_guacamole_compose
+    container_name: ${POSTGRES_CONTAINER_NAME}
     env_file: .env
     environment:
       PGDATA: /var/lib/postgresql/data/guacamole
@@ -71,7 +71,7 @@ services:
 
   # guacd, guacamole daemon
   guacd:
-    container_name: guacd_compose
+    container_name: ${GUACD_CONTAINER_NAME}
     image: guacamole/guacd
     networks:
       - guacnetwork_compose
@@ -82,7 +82,7 @@ services:
 
   # guacamole, frontend
   guacamole:
-    container_name: guacamole_compose
+    container_name: ${GUACAMOLE_CONTAINER_NAME}
     depends_on:
       - guacd
       - postgres
@@ -106,7 +106,7 @@ services:
 
   # nginx, reverse proxy
   nginx:
-    container_name: nginx_guacamole_compose
+    container_name: ${NGINX_CONTAINER_NAME}
     image: nginx:latest
     networks:
       - guacnetwork_compose
